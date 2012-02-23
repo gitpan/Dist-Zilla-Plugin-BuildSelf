@@ -1,12 +1,18 @@
 package Dist::Zilla::Plugin::BuildSelf;
-BEGIN {
-  $Dist::Zilla::Plugin::BuildSelf::VERSION = '0.001';
+{
+  $Dist::Zilla::Plugin::BuildSelf::VERSION = '0.002';
 }
 
 use Moose;
 with qw/Dist::Zilla::Role::BuildPL Dist::Zilla::Role::TextTemplate Dist::Zilla::Role::PrereqSource/;
 
 use Dist::Zilla::File::InMemory;
+
+has add_buildpl => (
+	is => 'ro',
+	isa => 'Bool',
+	default => 1,
+);
 
 has template => (
 	is  => 'ro',
@@ -19,6 +25,12 @@ has module => (
 	isa => 'Str',
 	builder => '_module_builder',
 	lazy => 1,
+);
+
+has auto_configure_requires => (
+	is => 'ro',
+	isa => 'Bool',
+	default => 0,
 );
 
 sub _module_builder {
@@ -36,8 +48,10 @@ has version => (
 sub register_prereqs {
 	my ($self) = @_;
 
-	my $reqs = $self->zilla->prereqs->requirements_for('runtime', 'requires');
-	$self->zilla->register_prereqs({ phase => 'configure' }, %{ $reqs->as_string_hash });
+	if ($self->auto_configure_requires) {
+		my $reqs = $self->zilla->prereqs->requirements_for('runtime', 'requires');
+		$self->zilla->register_prereqs({ phase => 'configure' }, %{ $reqs->as_string_hash });
+	}
 
 	return;
 }
@@ -45,9 +59,11 @@ sub register_prereqs {
 sub setup_installer {
 	my ($self, $arg) = @_;
 
-	my $content = $self->fill_in_string($self->template, { module => $self->module, version => $self->version });
-	my $file = Dist::Zilla::File::InMemory->new({ name => 'Build.PL', content => $content });
-	$self->add_file($file);
+	if ($self->add_buildpl) {
+		my $content = $self->fill_in_string($self->template, { module => $self->module, version => $self->version });
+		my $file = Dist::Zilla::File::InMemory->new({ name => 'Build.PL', content => $content });
+		$self->add_file($file);
+	}
 
 	return;
 }
@@ -68,7 +84,7 @@ Dist::Zilla::Plugin::BuildSelf - Build a Build.PL that uses the current module t
 
 =head1 VERSION
 
-version 0.001
+version 0.002
 
 =head1 DESCRIPTION
 

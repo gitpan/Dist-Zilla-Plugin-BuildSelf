@@ -4,7 +4,7 @@
       "Leon Timmermans <leont@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 4.200006, CPAN::Meta::Converter version 2.110580",
+   "generated_by" : "Dist::Zilla version 4.300006, CPAN::Meta::Converter version 2.113640",
    "license" : [
       "perl_5"
    ],
@@ -21,7 +21,6 @@
       },
       "runtime" : {
          "requires" : {
-            "Dist::Zilla" : "4.200006",
             "Dist::Zilla::File::InMemory" : 0,
             "Dist::Zilla::Role::BuildPL" : 0,
             "Dist::Zilla::Role::PrereqSource" : 0,
@@ -34,7 +33,9 @@
          "requires" : {
             "File::Find" : 0,
             "File::Temp" : 0,
-            "Test::More" : 0
+            "Test::More" : 0,
+            "strict" : 0,
+            "warnings" : 0
          }
       }
    },
@@ -50,6 +51,6 @@
          "web" : "http://github.com/Leont/dist-zilla-plugin-buildself"
       }
    },
-   "version" : "0.001"
+   "version" : "0.002"
 }
 
