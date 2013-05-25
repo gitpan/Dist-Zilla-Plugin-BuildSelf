@@ -1,6 +1,6 @@
 package Dist::Zilla::Plugin::BuildSelf;
 {
-  $Dist::Zilla::Plugin::BuildSelf::VERSION = '0.002';
+  $Dist::Zilla::Plugin::BuildSelf::VERSION = '0.003';
 }
 
 use Moose;
@@ -17,7 +17,7 @@ has add_buildpl => (
 has template => (
 	is  => 'ro',
 	isa => 'Str',
-	default => "use lib 'lib';\nuse {{ \$module }} {{ \$version }};\nBuild_PL(\@ARGV);\n",
+	default => "use {{ \$minimum_perl }};\nuse lib 'lib';\nuse {{ \$module }};\nBuild_PL(\@ARGV);\n",
 );
 
 has module => (
@@ -33,17 +33,22 @@ has auto_configure_requires => (
 	default => 0,
 );
 
+has minimum_perl => (
+	is      => 'ro',
+	isa     => 'Str',
+	lazy    => 1,
+	default => sub {
+		my $self = shift;
+		return $self->zilla->prereqs->requirements_for('runtime', 'requires')->requirements_for_module('perl') || '5.006'
+	},
+);
+
+
 sub _module_builder {
 	my $self = shift;
 	(my $name = $self->zilla->name) =~ s/-/::/g;
 	return $name;
 }
-
-has version => (
-	is  => 'ro',
-	isa => 'Str',
-	default => '',
-);
 
 sub register_prereqs {
 	my ($self) = @_;
@@ -60,7 +65,7 @@ sub setup_installer {
 	my ($self, $arg) = @_;
 
 	if ($self->add_buildpl) {
-		my $content = $self->fill_in_string($self->template, { module => $self->module, version => $self->version });
+		my $content = $self->fill_in_string($self->template, { module => $self->module, minimum_perl => $self->minimum_perl });
 		my $file = Dist::Zilla::File::InMemory->new({ name => 'Build.PL', content => $content });
 		$self->add_file($file);
 	}
@@ -74,8 +79,8 @@ no Moose;
 
 # ABSTRACT: Build a Build.PL that uses the current module to build itself
 
-
 __END__
+
 =pod
 
 =head1 NAME
@@ -84,7 +89,7 @@ Dist::Zilla::Plugin::BuildSelf - Build a Build.PL that uses the current module t
 
 =head1 VERSION
 
-version 0.002
+version 0.003
 
 =head1 DESCRIPTION
 
@@ -96,13 +101,13 @@ Unless you're writing a Build.PL compatible module builder, you should not be lo
 
 The module used to build the current module. Defaults to the main module of the current distribution.
 
-=head2 version
+=head2 minimum_perl
 
-The minimal version of the module, if any. Defaults to none.
+The minimal version of perl needed to run this Build.PL. It defaults to the current runtime requirements' value for C<perl>, or C<5.006> otherwise.
 
 =head2 template
 
-The template to use for the Build.PL script. This is a Text::Template string with two arguments as described above: C<$module> and C<$version>. Default is typical for the authors Build.PL ideas, YMMV.
+The template to use for the Build.PL script. This is a Text::Template string with the arguments as described above: C<$module> and C<$minimum_perl>. Default is typical for the author's Build.PL ideas, YMMV.
 
 =for Pod::Coverage register_prereqs
 setup_installer
@@ -120,4 +125,3 @@ This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-
